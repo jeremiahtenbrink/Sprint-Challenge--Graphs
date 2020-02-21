@@ -19,7 +19,7 @@ class Player:
         for direction in directioins:
             self.travel(direction)
 
-    def travel(self, direction, log_error = True, show_rooms = True):
+    def travel(self, direction, log_error = True, show_rooms = False):
         next_room = self.current_room.get_and_remove_room_in_direction(
             direction, log_error)
         if next_room is not None:
@@ -38,15 +38,17 @@ class Player:
         print(f"We have found {len(self.dead_end_start_rooms)} dead ends.")
 
         while len(self.graph) != self.rooms:
-            directions = self.current_room.get_exits()
-            if len(directions) == 0:
+            room = self.dft(self.current_room, False)
+            if len(room.path) == 0:
+                self.dft(self.current_room, True)
                 room = self.bfs_for_next_room(self.current_room)
                 keys = self.dead_end_start_rooms.keys()
                 self.travel_long(room.path)
                 self.dft(self.current_room, True)
                 continue
             else:
-                next_move = random.choice(directions)
+                next_move = random.choice(room.path[0])
+                self.dft(self.current_room, True)
                 room = self.current_room.get_room_in_direction(next_move)
                 keys = self.dead_end_start_rooms.keys()
                 if room.id in keys:
@@ -68,7 +70,7 @@ class Player:
             if direction is not None:
                 self.current_room.dead_end_next_direction = None
                 self.current_room.dead_end_next = None
-                self.travel(direction)
+                self.travel(direction, True, True)
             else:
                 break
 
@@ -123,22 +125,39 @@ class Player:
     def dft(self, start, reset):
         stack = Stack()
         stack.push(start)
+        results = {}
+        results[start.id] = start
         visited = set()
 
         while stack.size() > 0:
             room = stack.pop()
             if reset:
                 room.path = []
+                room.new_rooms = []
 
             if room.id not in visited:
                 visited.add(room.id)
                 directions = room.get_exits(False)
                 for dir in directions:
                     next_room = room.get_room_in_direction(dir)
+                    if next_room.id not in results.keys():
+                        results[next_room.id] = next_room
+                    if not reset:
+                        if next_room.id not in self.graph.keys():
+                            next_room.new_rooms = room.new_rooms + [
+                                next_room.id]
+
                     if next_room.id not in visited:
+                        next_room.path = room.path + [dir]
                         stack.push(next_room)
 
-        print("Graph reset")
+        # print("Graph reset")
+        best = None
+        for room in results.values():
+            if best is None or len(best.new_rooms) < len(room.new_rooms):
+                best = room
+
+        return best
 
     def find_dead_ends(self, start):
         stack = Stack()

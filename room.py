@@ -11,6 +11,7 @@ class Room:
         self.name = name
         self.description = description
         self.unvisited_directions = []
+        self.new_rooms = []
         self.n_to = None
         self.s_to = None
         self.e_to = None
@@ -110,7 +111,7 @@ class Room:
                     "That room has already been removed from the unvisited directoins")
                 print(f"{self.id} Returning the room anyway. ")
         else:
-            print(f"Removing {direction} from {self.id}")
+            # print(f"Removing {direction} from {self.id}")
             self.unvisited_directions.remove(direction)
             self.visited_rooms[direction] = {"Other_id": room.id}
 
