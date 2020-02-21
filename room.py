@@ -22,10 +22,8 @@ class Room:
         self.y = y
         self.weight = 0
         self.dead_end = False
-        self.dead_end_in_direction = None
-        self.dead_end_out_direction = None
-        self.dead_end_out_node = None
-        self.dead_end_in_node = None
+        self.dead_end_in = []
+        self.dead_end_out = []
         self.is_dead_end_node = False
         self.is_dead_end_root_node = False
 
@@ -37,16 +35,29 @@ class Room:
         #     f"Set dead end next: {self.id}  {direction} -> {next_dead_end_node.id}")
         self.try_to_remove_unvisited_dir(opposites[out_dir])
         self.is_dead_end_node = True
-        self.dead_end_in_node = in_node
-        self.dead_end_in_direction = opposites[out_dir]
+        node = {"room": in_node.id, "direction": opposites[out_dir]}
+        self.dead_end_in = self.check_for_current_node(self.dead_end_in, node)
         in_node.set_dead_end_out_node(self, out_dir)
 
     def set_dead_end_out_node(self, out_node, out_dir):
         # print(
         #     f"Set dead end next: {self.id}  {direction} -> {next_dead_end_node.id}")
         self.try_to_remove_unvisited_dir(out_dir)
-        self.dead_end_out_node = out_node
-        self.dead_end_out_direction = out_dir
+        node = {"room": out_node.id, "direction": out_dir}
+        self.dead_end_out = self.check_for_current_node(self.dead_end_out,
+                                                        node)
+
+    def check_for_current_node(self, nodes, node):
+        found = False
+        for each in nodes:
+            if each['room'] == node['room']:
+                print("Found the node")
+                found = True
+
+        if not found:
+            nodes.append(node)
+
+        return nodes
 
     def try_to_remove_unvisited_dir(self, dir):
         if dir in self.unvisited_directions:

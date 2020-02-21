@@ -38,25 +38,28 @@ class Player:
         print(f"We have found {len(self.dead_end_root_rooms)} dead ends.")
 
         while len(self.graph) != self.rooms:
-            room = self.dft(self.current_room, False)
-            if len(room.path) == 0:
-                self.dft(self.current_room, True)
-                room = self.bfs_for_next_room(self.current_room)
-                keys = self.dead_end_root_rooms.keys()
-                self.travel_long(room.path)
-                self.dft(self.current_room, True)
-                continue
+            if self.current_room.is_dead_end_node:
+                print("We are in a dead in node")
             else:
-                next_move = random.choice(room.path[0])
-                self.dft(self.current_room, True)
-                room = self.current_room.get_room_in_direction(next_move)
-                keys = self.dead_end_root_rooms.keys()
-                if room.id in keys:
-                    del (self.dead_end_root_rooms[room.id])
-                    print("We are at a dead end thread.")
-                    self.traverse_dead_end()
+                directions = self.current_room.get_exits()
+                if len(directions) == 0:
+                    self.dft(self.current_room, True)
+                    room = self.bfs_for_next_room(self.current_room)
+                    keys = self.dead_end_root_rooms.keys()
+                    self.travel_long(room.path)
+                    self.dft(self.current_room, True)
+                    continue
                 else:
-                    self.travel(next_move, False)
+                    next_move = random.choice(directions)
+                    # self.dft(self.current_room, True)
+                    room = self.current_room.get_room_in_direction(next_move)
+                    keys = self.dead_end_root_rooms.keys()
+                    if room.id in keys:
+                        del (self.dead_end_root_rooms[room.id])
+                        print("We are at a dead end thread.")
+                        self.traverse_dead_end()
+                    else:
+                        self.travel(next_move, False)
 
         return [i for i in self.path]
 
@@ -172,8 +175,6 @@ class Player:
                 if len(directions) == 1:
                     room.dead_end = True
                     room.is_dead_end_node = True
-                    room.dead_end_in_node = False
-                    room.dead_end_in_direction = False
                     self.find_dead_end_start_room(room)
                 for direction in directions:
                     new_room = room.get_room_in_direction(direction)
