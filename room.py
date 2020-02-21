@@ -11,7 +11,9 @@ class Room:
         self.name = name
         self.description = description
         self.unvisited_directions = []
+        self.visited_rooms = []
         self.new_rooms = []
+        self.path = []
         self.n_to = None
         self.s_to = None
         self.e_to = None
@@ -19,26 +21,38 @@ class Room:
         self.x = x
         self.y = y
         self.weight = 0
-        self.path = []
-        self.dead_end_next_direction = None
-        self.dead_end_prev_direction = None
-        self.dead_end_prev = None
-        self.dead_end_node = None
-        self.dead_end_next = None
+        self.dead_end = False
+        self.dead_end_in_direction = None
+        self.dead_end_out_direction = None
+        self.dead_end_out_node = None
+        self.dead_end_in_node = None
         self.is_dead_end_node = False
-        self.visited_rooms = {}
+        self.is_dead_end_root_node = False
 
-    def set_dead_end_next(self, next_dead_end_node, direction):
-        # print(
-        #     f"Set dead end next: {self.id}  {opposites[direction]} -> {next_dead_end_node.id}")
-        self.dead_end_next = next_dead_end_node
-        self.dead_end_next_direction = opposites[direction]
+    def set_dead_end_root_node(self):
+        self.is_dead_end_root_node = True
 
-    def set_up_dead_end_prev(self, dead_end, direction):
+    def set_dead_end_in_node(self, in_node, out_dir):
         # print(
-        #     f"Set dead end prev: {self.id} {direction} -> {dead_end.id}")
-        self.dead_end_prev = dead_end
-        self.dead_end_prev_direction = direction
+        #     f"Set dead end next: {self.id}  {direction} -> {next_dead_end_node.id}")
+        self.try_to_remove_unvisited_dir(opposites[out_dir])
+        self.is_dead_end_node = True
+        self.dead_end_in_node = in_node
+        self.dead_end_in_direction = opposites[out_dir]
+        in_node.set_dead_end_out_node(self, out_dir)
+
+    def set_dead_end_out_node(self, out_node, out_dir):
+        # print(
+        #     f"Set dead end next: {self.id}  {direction} -> {next_dead_end_node.id}")
+        self.try_to_remove_unvisited_dir(out_dir)
+        self.dead_end_out_node = out_node
+        self.dead_end_out_direction = out_dir
+
+    def try_to_remove_unvisited_dir(self, dir):
+        if dir in self.unvisited_directions:
+            self.unvisited_directions.remove(dir)
+        else:
+            print("Trying to remove a dir that has already been removed.")
 
     def __str__(self):
         return f"\n-------------------\n\n{self.name}\n\n   {self.description}\n\n{self.get_exits_string()}\n"

@@ -13,7 +13,7 @@ class Player:
         self.moves_backward = 0
         self.current_path = []
         self.room_during_retravel = None
-        self.dead_end_start_rooms = {}
+        self.dead_end_root_rooms = {}
 
     def travel_long(self, directioins):
         for direction in directioins:
@@ -35,14 +35,14 @@ class Player:
 
     def start(self):
         self.find_dead_ends(self.current_room)
-        print(f"We have found {len(self.dead_end_start_rooms)} dead ends.")
+        print(f"We have found {len(self.dead_end_root_rooms)} dead ends.")
 
         while len(self.graph) != self.rooms:
             room = self.dft(self.current_room, False)
             if len(room.path) == 0:
                 self.dft(self.current_room, True)
                 room = self.bfs_for_next_room(self.current_room)
-                keys = self.dead_end_start_rooms.keys()
+                keys = self.dead_end_root_rooms.keys()
                 self.travel_long(room.path)
                 self.dft(self.current_room, True)
                 continue
@@ -50,9 +50,9 @@ class Player:
                 next_move = random.choice(room.path[0])
                 self.dft(self.current_room, True)
                 room = self.current_room.get_room_in_direction(next_move)
-                keys = self.dead_end_start_rooms.keys()
+                keys = self.dead_end_root_rooms.keys()
                 if room.id in keys:
-                    del (self.dead_end_start_rooms[room.id])
+                    del (self.dead_end_root_rooms[room.id])
                     print("We are at a dead end thread.")
                     self.traverse_dead_end()
                 else:
@@ -63,9 +63,9 @@ class Player:
     def traverse_dead_end(self):
         print("Traversing dead end.")
         while self.current_room.dead_end_next:
-            keys = self.dead_end_start_rooms.keys()
+            keys = self.dead_end_root_rooms.keys()
             if self.current_room.id in keys:
-                del (self.dead_end_start_rooms[self.current_room.id])
+                del (self.dead_end_root_rooms[self.current_room.id])
             direction = self.current_room.dead_end_next_direction
             if direction is not None:
                 self.current_room.dead_end_next_direction = None
@@ -171,6 +171,9 @@ class Player:
                 directions = room.get_exits(False)
                 if len(directions) == 1:
                     room.dead_end = True
+                    room.is_dead_end_node = True
+                    room.dead_end_in_node = False
+                    room.dead_end_in_direction = False
                     self.find_dead_end_start_room(room)
                 for direction in directions:
                     new_room = room.get_room_in_direction(direction)
@@ -188,15 +191,24 @@ class Player:
             if room.id not in visited:
                 visited.append(room.id)
                 directions = room.get_exits(False)
+
                 if len(directions) > 2:
-                    self.dead_end_start_rooms[room.id] = room
-                    room.is_dead_end_node = True
-                    return
-                else:
-                    for direction in directions:
-                        new_room = room.get_room_in_direction(direction)
-                        if new_room.id not in visited:
-                            new_room.set_dead_end_next(room, direction)
+                    room.set_dead_end_root_node()
+                    self.dead_end_root_rooms[room.id] = room
+
+                for direction in directions:
+                    new_room = room.get_room_in_direction(direction)
+                    if new_room.id not in visited:
+                        if len(directions) > 2:
+                            new_room.set_dead_end_root_node()
+                            new_room.set_dead_end_in_node(room, direction)
+                        elif len(directions) == 2:
+                            print("I need to figure out what to do here.")
+                            new_room.set_dead_end_in_node(room, direction)
+                        else:
+                            new_room.set_dead_end_in_node(room, direction)
+
+                        if not new_room.is_dead_end_root_node and new_room.id not in visited:
                             queue.enqueue(new_room)
 
     def check_in_graph(self, room, print = False):
