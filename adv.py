@@ -32,7 +32,6 @@ traversal_path = player.start()
 visited_rooms = set()
 player.current_room = world.starting_room
 visited_rooms.add(player.current_room)
-
 print(f"Moves: {len(traversal_path)}")
 count = 0
 for move in traversal_path:

@@ -1,7 +1,12 @@
+from typing import List, Generic, TypeVar
+
+T = TypeVar('T')
+
+
 # Note: This Queue class is sub-optimal. Why?
-class Queue():
+class Queue(Generic[T]):
     def __init__(self):
-        self.queue = []
+        self.queue: List[T] = []
 
     def enqueue(self, value):
         self.queue.append(value)
@@ -16,7 +21,7 @@ class Queue():
         return len(self.queue)
 
 
-class Stack():
+class Stack(Generic[T]):
     def __init__(self):
         self.stack = []
 

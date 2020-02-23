@@ -1,18 +1,17 @@
+from typing import Dict, List
 import random
 
-# Implement a class to hold room information. This should have name and
-# description attributes.
-opposites = {"n": "s", "s": "n", "e": "w", "w": "e"}
+opposites = {"s": "n", "n": "s", "e": "w", "w": "e"}
 
 
-class Room:
-    def __init__(self, name, description, id = 0, x = None, y = None):
+class Room(object):
+    def __init__(self, name: str, description: str, id: enumerate = 0,
+                 x: enumerate = None, y: enumerate = None) -> None:
         self.id = id
         self.name = name
         self.description = description
         self.unvisited_directions = []
         self.visited_rooms = []
-        self.new_rooms = []
         self.path = []
         self.n_to = None
         self.s_to = None
@@ -20,50 +19,38 @@ class Room:
         self.w_to = None
         self.x = x
         self.y = y
+        self.visited = False
         self.weight = 0
         self.dead_end = False
-        self.dead_end_in = []
-        self.dead_end_out = []
+        self.dead_end_in: Dict[str: Room] = {}
+        self.dead_end_out: Dict[str: Room] = {}
         self.is_dead_end_node = False
         self.is_dead_end_root_node = False
+        self.number_of_paths = 0
+        self.number_of_dead_ends = 0
 
-    def set_dead_end_root_node(self):
-        self.is_dead_end_root_node = True
-
-    def set_dead_end_in_node(self, in_node, out_dir):
+    def set_dead_end_in_node(self, in_node, out_dir: str):
         # print(
         #     f"Set dead end next: {self.id}  {direction} -> {next_dead_end_node.id}")
         self.try_to_remove_unvisited_dir(opposites[out_dir])
         self.is_dead_end_node = True
-        node = {"room": in_node.id, "direction": opposites[out_dir]}
-        self.dead_end_in = self.check_for_current_node(self.dead_end_in, node)
+        self.dead_end_in[opposites[out_dir]] = in_node
+        if len(self.dead_end_in) > self.number_of_dead_ends:
+            self.number_of_dead_ends = len(self.dead_end_in)
         in_node.set_dead_end_out_node(self, out_dir)
 
-    def set_dead_end_out_node(self, out_node, out_dir):
+    def set_dead_end_out_node(self, out_node, out_dir: str):
         # print(
         #     f"Set dead end next: {self.id}  {direction} -> {next_dead_end_node.id}")
         self.try_to_remove_unvisited_dir(out_dir)
-        node = {"room": out_node.id, "direction": out_dir}
-        self.dead_end_out = self.check_for_current_node(self.dead_end_out,
-                                                        node)
+        self.dead_end_out[out_dir] = out_node
 
-    def check_for_current_node(self, nodes, node):
-        found = False
-        for each in nodes:
-            if each['room'] == node['room']:
-                print("Found the node")
-                found = True
-
-        if not found:
-            nodes.append(node)
-
-        return nodes
-
-    def try_to_remove_unvisited_dir(self, dir):
+    def try_to_remove_unvisited_dir(self, dir, print_error = False):
         if dir in self.unvisited_directions:
             self.unvisited_directions.remove(dir)
         else:
-            print("Trying to remove a dir that has already been removed.")
+            if print_error:
+                print("Trying to remove a dir that has already been removed.")
 
     def __str__(self):
         return f"\n-------------------\n\n{self.name}\n\n   {self.description}\n\n{self.get_exits_string()}\n"
@@ -71,7 +58,7 @@ class Room:
     def print_room_description(self, player):
         print(str(self))
 
-    def get_exits(self, unvisited_eixts_only = True):
+    def get_exits(self, unvisited_eixts_only: bool = False) -> List:
 
         exits = []
         if not unvisited_eixts_only:
@@ -101,10 +88,6 @@ class Room:
         return f"Exits: [{', '.join(self.get_exits(False))}]"
 
     def connect_rooms(self, direction, connecting_room):
-        if direction not in self.unvisited_directions:
-            self.add_unvisited_direction(direction)
-        if opposites[direction] not in connecting_room.unvisited_directions:
-            connecting_room.add_unvisited_direction(opposites[direction])
 
         if direction == "n":
             self.n_to = connecting_room
@@ -125,13 +108,13 @@ class Room:
     def add_unvisited_direction(self, direction):
         self.unvisited_directions.append(direction)
 
-    def get_and_remove_room_in_direction(self, direction, log_error):
+    def get_and_remove_room_in_direction(self, direction, hide_error):
         # print(f"Removing route {direction} from {self.id}")
         room = self.get_room_in_direction(direction)
 
         not_in = direction not in self.unvisited_directions
         if not_in:
-            if not log_error:
+            if not hide_error:
                 print(
                     "That room has already been removed from the unvisited directoins")
                 print(f"{self.id} Returning the room anyway. ")
@@ -153,6 +136,10 @@ class Room:
             return self.w_to
         else:
             return None
+
+    def set_number_of_paths(self):
+        paths = self.get_exits()
+        self.number_of_paths = len(paths)
 
     def get_coords(self):
         return [self.x, self.y]
